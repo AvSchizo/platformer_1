@@ -29,3 +29,14 @@ class cameraClass():
 		# gets called by other objects when they're determining their size and position when drawing themselves
 		camScaling = self.scalingFactor**(self.pos[2]-distance)
 		return camScaling
+
+
+
+
+
+
+FPS = 60
+seconds = 2
+
+for i in range(seconds*FPS):
+	clock.tick(60)
