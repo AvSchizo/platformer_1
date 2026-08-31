@@ -17,18 +17,51 @@ clock = pygame.time.Clock()
 
 
 
+
+
 class cameraClass():
 	def __init__(self, scalingReference=[1/2, 10]):
+
+		self.size = [800, 450]
 
 		self.pos = [0, 0, 0]
 		
 		self.scalingFactor = scalingReference[0]**(1/scalingReference[1])
+
+		self.update()
 	
 
 	def getScaling(self, distance=0):
 		# gets called by other objects when they're determining their size and position when drawing themselves
-		camScaling = self.scalingFactor**(self.pos[2]-distance)
-		return camScaling
+		return self.scalingFactor**(self.pos[2]-distance)
+	
+
+	def update(self):
+		camScaling = self.getScaling()
+
+		self.left = self.pos[0] - (self.size[0]/2 * camScaling)
+		self.right = self.pos[0] + (self.size[0]/2 * camScaling)
+
+		self.bottom = self.pos[1] - (self.size[1]/2 * camScaling)
+		self.top = self.pos[1] + (self.size[1]/2 * camScaling)
+
+
+
+
+# mglc: mapGeoLineClass
+class mglc():
+
+	def __init__(self, points, direction=None):
+
+		self.points = points
+
+		self.direction = direction
+
+
+### TEST LEVEL ###
+mapGeo_full = [
+	mglc([(-800, 0), (800, 0)]),
+]
 
 
 
