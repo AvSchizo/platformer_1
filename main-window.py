@@ -1,14 +1,15 @@
 import pygame
 import random
 
+
 pygame.init()
+pygame.display.set_caption("PLATFORMER")
 
 refScreenSize = [1600, 900]
 screen = pygame.display.set_mode(refScreenSize)
 resolutionScaling = screen.get_height()/refScreenSize[1]
 resolutionScaling_alt = screen.get_width()/refScreenSize[0]
 
-pygame.display.set_caption("PLATFORMER")
 
 clock = pygame.time.Clock()
 
