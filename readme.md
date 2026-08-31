@@ -1,4 +1,4 @@
-# linux and apple
+# LINUX AND APPLE
 
 ## to set up
 python3 -m venv .venv
@@ -9,7 +9,7 @@ pip install pygame
 
 deactivate
 
-## to run tetris
+## to run
 source .venv/bin/activate
 
 python3 main-window.py
