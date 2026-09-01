@@ -45,6 +45,8 @@ class cameraClass():
 		self.bottom = self.pos[1] - (self.size[1]/2 * camScaling)
 		self.top = self.pos[1] + (self.size[1]/2 * camScaling)
 
+camera = cameraClass()
+
 
 
 
@@ -66,16 +68,23 @@ mapGeo_loaded = [
 
 
 
-class playerClass(pygame.sprite.Sprite):
+class playerClass():
 	def __init__(self):
-		super().__init__()
-		self.image = pygame.Surface(())
+
+		self.pos = [0, 0]
+		self.distance = 0
+
+		self.image = pygame.Surface((50, 50))
+		self.image.fill("red")
 	
 
-	def update()
+	def update(self, cam=camera):
+		self.image = pygame.Surface((50, 50))
+		self.image = pygame.transform.scale(self.image, [50*cam.getScaling()]*2)
+		self.rect = self.image.get_rect(center=self.pos)
 
 
-player = pygame.sprite.GroupSingle()
+
 
 
 
