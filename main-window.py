@@ -59,9 +59,24 @@ class mglc():
 
 
 ### TEST LEVEL ###
-mapGeo_full = [
+mapGeo_loaded = [
 	mglc([(-800, 0), (800, 0)]),
 ]
+
+
+
+
+class playerClass(pygame.sprite.Sprite):
+	def __init__(self):
+		super().__init__()
+		self.image = pygame.Surface(())
+	
+
+	def update()
+
+
+player = pygame.sprite.GroupSingle()
+
 
 
 
