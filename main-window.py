@@ -88,9 +88,6 @@ class mglc():
 		pointB = self.points[1]
 
 		scaling = cam.getScaling()*resolutionScaling
-		# screen.get_width()/2-(self.pos[0]-cam.pos[0])*scaling
-		print(pointA[0]+cam.pos[0])
-		# print((scrn.get_width()/2-(pointA[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointA[1]-cam.pos[1])*scaling))
 		pygame.draw.line(scrn, (255, 255, 255), (scrn.get_width()/2+(pointA[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointA[1]-cam.pos[1])*scaling), (scrn.get_width()/2+(pointB[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointB[1]-cam.pos[1])*scaling), 1)
 
 
@@ -102,15 +99,77 @@ mapGeo_loaded = [
 
 
 
+### PLAYER STUFF ###
+class dashClass():
+	
+	def __init__(self):
+		self.reset()
+	
+
+
+	def reset(self):
+
+		self.velocity = [0, 0]
+
+		self.timer = 0
+		self.cooldown = 0
+
+		self.dashes = 1
+	
+
+
+	def initiate(self, direction, dashSpeed=10):
+		if direction[0] == direction[1] and direction[0] == 0:
+			return
+		
+		for i in range(len(self.velocity)):
+			self.velocity[i] == direction[i]*dashSpeed
+	
+
+
+	def startCooldown(self, time=10):
+		self.cooldown = time
+	
+
+
+	def update(self):
+		
+		if self.timer > 0:
+			self.timer -= 1
+			if self.timer == 0:
+				self.startCooldown()
+		if self.timer < 0:
+			self.timer = 0
+		
+		if self.timer == 0:
+			for v in self.velocity:
+				self.updateSpec(v)
+
+		self.updateSpec(cooldown)
+
+
+
+	def updateSpec(self, data):
+		if self.data > 0:
+			self.data -= 1
+		if self.data < 0:
+			self.data = 0
+
+
+
+
 class playerClass():
 
 	def __init__(self, pos=[0, 0]):
+
+		self.dash = dashClass()
 
 		self.pos = pos
 		self.z = 0
 		self.size = [25, 25]
 
 		self.velocity = [0, 0]
+		self.airTime = 0
 
 		self.totalInputList = []
 
@@ -150,25 +209,32 @@ class playerClass():
 		else:
 			geo = opgeo
 
+
 		defaultGravity = .5
 		gravity = defaultGravity
 		
-		self.velocity[1] -= gravity
+		if self.dash.timer > 0:
+			self.velocity[1] = self.dash.velocity[1]
+		else:
+			self.velocity[1] -= gravity
 
 
 		# horizontal movement + collision
-		self.collisionNormal(0, geo)
+		inVel = self.velocity[0]
+		self.collisionNormal(0, geo, inVel)
 
 		# vertical movement + collision
-		self.collisionNormal(1, geo)
+		inVel = self.velocity[1]
+		self.collisionNormal(1, geo, inVel)
 	
 
 
-	def collisionNormal(self, dir, geo):
-		velDist = int(abs(self.velocity[dir]))
+	def collisionNormal(self, dir, geo, vel):
+		velocity = int(vel)
+		velDist = abs(velocity)
 		for i in range(velDist):
 			lastPos = self.pos[dir]
-			self.pos[dir] += self.velocity[dir]/velDist
+			self.pos[dir] += velocity/velDist
 			for line in geo:
 				pointA = line.points[0]
 				pointB = line.points[1]
@@ -181,9 +247,13 @@ class playerClass():
 					pass
 				else:
 					self.pos[dir] = lastPos
+
+					self.airTime = 0
+
 					self.velocity[dir] = 0
 					#to stop checking other lines for collision
 					return
+		self.airTime += 1
 
 
 	
