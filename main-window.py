@@ -1,5 +1,6 @@
 import pygame
 import random
+from sys import exit
 
 
 pygame.init()
@@ -12,6 +13,9 @@ resolutionScaling_alt = screen.get_width()/refScreenSize[0]
 
 
 clock = pygame.time.Clock()
+
+
+
 
 
 
@@ -67,9 +71,16 @@ class mglc():
 	
 
 
-	def draw(self, scrn=screen):
+	def draw(self, scrn=screen, cam=camera):
+
+		pointA = self.points[0]
+		pointB = self.points[1]
+
+		scaling = cam.getScaling()*resolutionScaling
 		# screen.get_width()/2-(self.pos[0]-cam.pos[0])*scaling
-		pygame.draw.line(screen, (255, 255, 255), (100, 50), self.points[1], 10)
+		print(pointA[0]+cam.pos[0])
+		# print((scrn.get_width()/2-(pointA[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointA[1]-cam.pos[1])*scaling))
+		pygame.draw.line(scrn, (255, 255, 255), (scrn.get_width()/2+(pointA[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointA[1]-cam.pos[1])*scaling), (scrn.get_width()/2+(pointB[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointB[1]-cam.pos[1])*scaling), 1)
 
 
 ### TEST LEVEL ###
@@ -97,7 +108,7 @@ class playerClass():
 		defaultGravity = .5
 		gravity = defaultGravity
 		
-		self.velocity[1] = -1
+		self.velocity[1] -= gravity
 
 
 		# horizontal movement + collision
@@ -128,7 +139,6 @@ class playerClass():
 					self.velocity[dir] = 0
 					#to stop checking other lines for collision
 					return
-				print(self.pos[dir])
 
 
 	
@@ -140,9 +150,9 @@ class playerClass():
 		image.fill("red")
 
 		# calculates position on screen
-		rect = image.get_rect(center=(screen.get_width()/2-(self.pos[0]-cam.pos[0])*scaling, screen.get_height()/2-(self.pos[1]-cam.pos[1])*scaling))
+		rect = image.get_rect(center=(scrn.get_width()/2+(self.pos[0]-cam.pos[0])*scaling, scrn.get_height()/2-(self.pos[1]-cam.pos[1])*scaling))
 
-		screen.blit(image, rect)
+		scrn.blit(image, rect)
 
 player = playerClass(pos=[0, 0])
 
@@ -164,6 +174,12 @@ while True:
 	currentFrame += 1
 
 
+	frameEvents = pygame.event.get()
+	for event in frameEvents:
+		if event.type == pygame.QUIT:
+			exit()
+
+
 
 	screen.fill((0, 0, 0))
 
@@ -176,9 +192,9 @@ while True:
 
 
 
-	if currentFrame > FPS*5:
-		break
+	# if currentFrame > FPS*5:
+	# 	break
 
 
 	pygame.display.update()
-	clock.tick(60)
+	clock.tick(FPS)
