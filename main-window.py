@@ -71,7 +71,18 @@ class mglc():
 	
 
 
-	def draw(self, scrn=screen, cam=camera):
+	def draw(self, opscrn=None, opcam=None):
+
+		if opscrn == None:
+			opscrn = screen
+		else:
+			scrn = opscrn
+
+		if opcam == None:
+			cam = camera
+		else:
+			cam = opcam
+
 
 		pointA = self.points[0]
 		pointB = self.points[1]
@@ -100,10 +111,44 @@ class playerClass():
 		self.size = [25, 25]
 
 		self.velocity = [0, 0]
+
+		self.totalInputList = []
+
+
+
+	def getInputValues(self, tas=False, indi1=True, indi2=True):
+
+		# inputValues setup
+		if tas and currentFrame <= len(self.totalInputList):
+			pass
+	
+		# turn player inputs into input values
+		else:
+	
+			tempList1 = []
+			keysDown = pygame.key.get_pressed()
+			for key in list(playerInputs.values()):
+				if keysDown[key]:
+					tempList1.append(1)
+				else:
+					tempList1.append(0)
+
+			if indi2:
+				totalInputList.append(tempList1)
+
+		if indi1:
+			self.inputValues = tempList1
+		else:
+			return tempList1
 	
 
 
-	def updatePhysics(self, geo=mapGeo_loaded):
+	def updatePhysics(self, opgeo=None):
+
+		if opgeo == None:
+			geo = mapGeo_loaded
+		else:
+			geo = opgeo
 
 		defaultGravity = .5
 		gravity = defaultGravity
@@ -142,7 +187,18 @@ class playerClass():
 
 
 	
-	def draw(self, scrn=screen, cam=camera):
+	def draw(self, opscrn=None, opcam=None):
+
+		if opscrn == None:
+			scrn = screen
+		else:
+			scrn = opscrn
+
+		if opcam == None:
+			cam = camera
+		else:
+			cam = opcam
+
 
 		scaling = cam.getScaling(self.z) * resolutionScaling
 
@@ -155,6 +211,37 @@ class playerClass():
 		scrn.blit(image, rect)
 
 player = playerClass(pos=[0, 0])
+
+
+
+
+# INPUTS
+
+# toFind is value, function returns index of key in list of keys
+def findIndex_dict(toFind, dict):
+	keys = list(dict.keys())
+	for i in range(len(keys)):
+		
+		if dict[keys[i]] == toFind:
+			return i
+	
+	print("debug (findIndex_dict): findIndex_dict returns nothing")
+
+
+TAS = False
+totalInputList = []
+
+playerInputs = {
+	"up": pygame.K_UP,
+	"down": pygame.K_DOWN,
+	"left": pygame.K_LEFT,
+	"right": pygame.K_RIGHT,
+	"z": pygame.K_z,
+	"x": pygame.K_x,
+	"c": pygame.K_c,
+	"escape": pygame.K_ESCAPE,
+}
+player.getInputValues()
 
 
 
@@ -186,7 +273,7 @@ while True:
 	player.updatePhysics()
 	player.draw()
 	for line in mapGeo_loaded:
-		line.draw(scrn=screen)
+		line.draw(opscrn=screen)
 	# pygame.draw.line(screen, (255, 255, 255), (-100, 0), (100, 0), 1)
 
 
