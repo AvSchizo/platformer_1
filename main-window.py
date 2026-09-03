@@ -175,7 +175,7 @@ class dashClass():
 
 class playerClass():
 
-	def __init__(self, pos=[0, 0]):
+	def __init__(self, pos=[0, 0], inList=[]):
 
 		self.dash = dashClass()
 
@@ -186,7 +186,7 @@ class playerClass():
 		self.velocity = [0, 0]
 		self.airTime = 0
 
-		self.totalInputList = []
+		self.totalInputList = inList
 
 
 
@@ -227,8 +227,24 @@ class playerClass():
 		if self.inputValues[5] == 1 and self.airTime == 0:
 			self.velocity[1] = jumpForce
 
+		acceleration = 1
+		deceleration = .8
 		walkSpeed = 5
-		self.velocity[0] = (self.inputValues[3] - self.inputValues[2])*walkSpeed
+		if self.inputValues[2] == 1 and self.velocity[0] > -1*walkSpeed*(self.inputValues[4]+1):
+			self.velocity[0] -= acceleration
+		if self.inputValues[3] == 1 and self.velocity[0] < walkSpeed*(self.inputValues[4]+1):
+			self.velocity[0] += acceleration
+
+		if self.inputValues[2] + self.inputValues[3] == 0:
+			if abs(self.velocity[0]) <= 1:
+				self.velocity[0] = 0
+			else:
+				self.velocity[0] *= deceleration
+
+		if self.velocity[0] <= -1*walkSpeed*(self.inputValues[4]+1)-1:
+			self.velocity[0] += 1
+		if self.velocity[0] >= walkSpeed*(self.inputValues[4]+1)+1:
+			self.velocity[0] -= 1
 	
 
 
@@ -294,7 +310,10 @@ class playerClass():
 				if dir == 0:
 					print("col")
 
-				self.dash.reset()
+				if self.airTime > 0 and dir == 1:
+					self.velocity[0] += self.dash.velocity[0]
+					self.dash.reset()
+					self.dash.startCooldown(10)
 
 
 	
