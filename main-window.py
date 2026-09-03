@@ -118,16 +118,19 @@ class dashClass():
 	
 
 
-	def initiate(self, direction, dashSpeed=10):
+	# dash function
+	def initiate(self, direction, dashSpeed=10, length=5):
 		if direction[0] == direction[1] and direction[0] == 0:
 			return
 		
 		for i in range(len(self.velocity)):
-			self.velocity[i] == direction[i]*dashSpeed
+			self.velocity[i] = direction[i]*dashSpeed
+
+		self.timer = length
 	
 
 
-	def startCooldown(self, time=10):
+	def startCooldown(self, time=20):
 		self.cooldown = time
 	
 
@@ -142,18 +145,24 @@ class dashClass():
 			self.timer = 0
 		
 		if self.timer == 0:
-			for v in self.velocity:
-				self.updateSpec(v)
+			for i in range(len(self.velocity)):
+				if self.velocity[i] > 0:
+					self.velocity[i] -= 1
+				if self.velocity[i] < 0:
+					self.velocity[i] = 0
 
-		self.updateSpec(cooldown)
+		if self.cooldown > 0:
+			self.cooldown -= 1
+		if self.cooldown < 0:
+			self.cooldown = 0
 
 
 
-	def updateSpec(self, data):
-		if self.data > 0:
-			self.data -= 1
-		if self.data < 0:
-			self.data = 0
+	def updateSpec(self, data, decrease=1):
+		if data > 0:
+			data -= decrease
+		if data < 0:
+			data = 0
 
 
 
@@ -193,12 +202,20 @@ class playerClass():
 					tempList1.append(0)
 
 			if indi2:
-				totalInputList.append(tempList1)
+				self.totalInputList.append(tempList1)
 
 		if indi1:
-			self.inputValues = tempList1
+			self.inputValues = self.totalInputList[currentFrame-1]
 		else:
 			return tempList1
+
+
+
+	def dealWithInputs(self):
+		self.getInputValues(tas=TAS)
+
+		if self.inputValues[6] == 1 and self.dash.timer == 0 and self.dash.cooldown == 0:
+			self.dash.initiate([self.inputValues[3]-self.inputValues[2], self.inputValues[0]-self.inputValues[1]])
 	
 
 
@@ -220,11 +237,11 @@ class playerClass():
 
 
 		# horizontal movement + collision
-		inVel = self.velocity[0]
+		inVel = self.velocity[0] + self.dash.velocity[0]
 		self.collisionNormal(0, geo, inVel)
 
 		# vertical movement + collision
-		inVel = self.velocity[1]
+		inVel = self.velocity[1] + self.dash.velocity[1]
 		self.collisionNormal(1, geo, inVel)
 	
 
@@ -232,28 +249,35 @@ class playerClass():
 	def collisionNormal(self, dir, geo, vel):
 		velocity = int(vel)
 		velDist = abs(velocity)
+		if dir == 1 and velDist > 0:
+			self.airTime += 1
 		for i in range(velDist):
 			lastPos = self.pos[dir]
 			self.pos[dir] += velocity/velDist
+			collided = 0
 			for line in geo:
 				pointA = line.points[0]
 				pointB = line.points[1]
 
 				# if both on one side
-				collided = 0
 				if abs(pointA[0]-self.pos[0]) > self.size[0]/2 and abs(pointB[0]-self.pos[0]) > self.size[0]/2 and (pointA[0]-self.pos[0])*(pointB[0]-self.pos[0]) >= 0:
 					pass
 				elif abs(pointA[1]-self.pos[1]) > self.size[1]/2 and abs(pointB[1]-self.pos[1]) > self.size[1]/2 and (pointA[1]-self.pos[1])*(pointB[1]-self.pos[1]) >= 0:
 					pass
 				else:
-					self.pos[dir] = lastPos
+					collided = 1
 
+			if collided == 1:
+				self.pos[dir] = lastPos
+
+				if dir == 1 and velocity < 0:
 					self.airTime = 0
 
-					self.velocity[dir] = 0
-					#to stop checking other lines for collision
-					return
-		self.airTime += 1
+				self.velocity[dir] = 0
+				if dir == 0:
+					print("col")
+				#to stop checking other lines for collision
+				# return
 
 
 	
@@ -311,7 +335,6 @@ playerInputs = {
 	"c": pygame.K_c,
 	"escape": pygame.K_ESCAPE,
 }
-player.getInputValues()
 
 
 
@@ -340,8 +363,13 @@ while True:
 
 	screen.fill((0, 0, 0))
 
+	player.dash.update()
+	player.dealWithInputs()
+
 	player.updatePhysics()
 	player.draw()
+
+
 	for line in mapGeo_loaded:
 		line.draw(opscrn=screen)
 	# pygame.draw.line(screen, (255, 255, 255), (-100, 0), (100, 0), 1)
