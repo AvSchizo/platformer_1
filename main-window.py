@@ -7,7 +7,7 @@ pygame.init()
 pygame.display.set_caption("PLATFORMER")
 
 refScreenSize = [800, 450]
-screen = pygame.display.set_mode([1600, 900])
+screen = pygame.display.set_mode(refScreenSize)
 resolutionScaling = screen.get_height()/refScreenSize[1]
 resolutionScaling_alt = screen.get_width()/refScreenSize[0]
 
@@ -25,9 +25,9 @@ clock = pygame.time.Clock()
 
 class cameraClass():
 
-	def __init__(self, scalingReference=[1/2, 10], pos=[0, 0, 0]):
+	def __init__(self, size=[800, 450], scalingReference=[1/2, 10], pos=[0, 0, 0]):
 
-		self.size = [800, 450]
+		self.size = size
 
 		self.pos = pos
 		
@@ -54,8 +54,15 @@ class cameraClass():
 
 		self.width = self.size[0]*camScaling
 		self.height = self.size[1]*camScaling
+	
 
-camera = cameraClass()
+
+	def follow(self, object):
+		self.pos[0] = object.pos[0]
+		self.pos[1] = object.pos[1]
+
+# special camera for codehs, get rid of size=[400, 450] at home
+camera = cameraClass(size=[400, 450])
 
 
 
@@ -93,7 +100,10 @@ class mglc():
 
 ### TEST LEVEL ###
 mapGeo_loaded = [
-	mglc([(-800, -100), (800, -100)]),
+	mglc([(-800, -100), (5000, -100)]),
+	mglc([(100, -100), (100, 0)]),
+	mglc([(100, 0), (200, 0)]),
+	mglc([(200, -100), (200, 0)]),
 ]
 
 
@@ -119,9 +129,12 @@ class dashClass():
 
 
 	# dash function
-	def initiate(self, direction, dashSpeed=10, length=5):
-		if direction[0] == direction[1] and direction[0] == 0 or direction[1] == -1 and player.airTime == 0:
+	def initiate(self, direction, player, dashSpeed=10, length=5):
+		if direction[0] == direction[1] and direction[0] == 0 or direction[1] == -1 and player.airTime == 0 or self.dashes == 0:
 			return
+
+		if player.airTime > 0:
+			self.dashes -= 1
 
 		player.dashInitiated()
 		
@@ -185,6 +198,7 @@ class playerClass():
 
 		self.velocity = [0, 0]
 		self.airTime = 0
+		self.extraJumpForce = 0
 
 		self.totalInputList = inList
 
@@ -221,19 +235,30 @@ class playerClass():
 		self.getInputValues(tas=TAS)
 
 		if self.inputValues[6] == 1 and self.dash.timer == 0 and self.dash.cooldown == 0:
-			self.dash.initiate([self.inputValues[3]-self.inputValues[2], self.inputValues[0]-self.inputValues[1]])
+			self.dash.initiate([self.inputValues[3]-self.inputValues[2], self.inputValues[0]-self.inputValues[1]], self)
 
-		jumpForce = 10
+		maxJumpHigher = 10
+		if self.airTime > 0 and self.inputValues[5] == 0 or self.airTime > maxJumpHigher:
+			self.jumpHigher = 0
+		else:
+			self.jumpHigher = 1
+		jumpForce = 15
 		if self.inputValues[5] == 1 and self.airTime == 0:
-			self.velocity[1] = jumpForce
+			self.jump(jumpForce)
+		if self.jumpHigher == 1 and self.airTime > 0:
+			self.velocity[1] += .5
 
 		acceleration = 1
 		deceleration = .8
 		walkSpeed = 5
 		if self.inputValues[2] == 1 and self.velocity[0] > -1*walkSpeed*(self.inputValues[4]+1):
 			self.velocity[0] -= acceleration
+			if self.velocity[0] > 0:
+				self.velocity[0] -= acceleration
 		if self.inputValues[3] == 1 and self.velocity[0] < walkSpeed*(self.inputValues[4]+1):
 			self.velocity[0] += acceleration
+			if self.velocity[0] < 0:
+				self.velocity[0] += acceleration
 
 		if self.inputValues[2] + self.inputValues[3] == 0:
 			if abs(self.velocity[0]) <= 1:
@@ -248,6 +273,12 @@ class playerClass():
 	
 
 
+	def jump(self, force=10):
+		self.extraJumpForce = 8
+		self.velocity[1] = force
+	
+
+
 	def updatePhysics(self, opgeo=None):
 
 		if opgeo == None:
@@ -256,11 +287,17 @@ class playerClass():
 			geo = opgeo
 
 
-		defaultGravity = .5
+		defaultGravity = 1.5
 		gravity = defaultGravity
+
+		if self.airTime > 2 or self.jumpHigher == 0:
+			self.extraJumpForce = 0
 		
 		if self.dash.timer == 0:
-			self.velocity[1] -= gravity
+			if self.velocity[1] > 0 and self.jumpHigher == 0:
+				self.velocity[1] -= gravity*3
+			else:
+				self.velocity[1] -= gravity
 
 
 		# horizontal movement + collision
@@ -268,7 +305,7 @@ class playerClass():
 		self.collisionNormal(0, geo, inVel)
 
 		# vertical movement + collision
-		inVel = self.velocity[1] + self.dash.velocity[1]
+		inVel = self.velocity[1] + self.dash.velocity[1] + self.extraJumpForce
 		self.collisionNormal(1, geo, inVel)
 
 
@@ -305,6 +342,7 @@ class playerClass():
 
 				if dir == 1 and velocity < 0:
 					self.airTime = 0
+					self.dash.dashes = 1
 
 				self.velocity[dir] = 0
 				if dir == 0:
@@ -403,18 +441,22 @@ while True:
 	player.dealWithInputs()
 
 	player.updatePhysics()
+
+
+	# print(camera.left)
+	# print(player.pos[0])
+	if player.pos[0] < camera.left:
+		camera.pos[0] = player.pos[0] - camera.width/2
+	if player.pos[0] > camera.right:
+		camera.pos[0] = player.pos[0] + camera.width/2
+	camera.update()
+
+
 	player.draw()
 
 
 	for line in mapGeo_loaded:
 		line.draw(opscrn=screen)
-	# pygame.draw.line(screen, (255, 255, 255), (-100, 0), (100, 0), 1)
-
-
-
-
-	# if currentFrame > FPS*5:
-	# 	break
 
 
 	pygame.display.update()
