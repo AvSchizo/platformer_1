@@ -16,7 +16,9 @@ clock = pygame.time.Clock()
 
 
 
-
+tasInputs = [
+	[0, 0, 0, 0, 0, 0, 0, 0],
+]
 
 
 
@@ -104,6 +106,9 @@ mapGeo_loaded = [
 	mglc([(100, -100), (100, 0)]),
 	mglc([(100, 0), (200, 0)]),
 	mglc([(200, -100), (200, 0)]),
+	mglc([(-100, 30), (-50, 30)]),
+	mglc([(150, 100), (150, 30)]),
+	mglc([(-100, 60), (-50, 60)]),
 ]
 
 
@@ -129,7 +134,7 @@ class dashClass():
 
 
 	# dash function
-	def initiate(self, direction, player, dashSpeed=10, length=5):
+	def initiate(self, direction, player, dashSpeed=10, length=10):
 		if direction[0] == direction[1] and direction[0] == 0 or direction[1] == -1 and player.airTime == 0 or self.dashes == 0:
 			return
 
@@ -344,12 +349,12 @@ class playerClass():
 					self.airTime = 0
 					self.dash.dashes = 1
 
-				self.velocity[dir] = 0
+					if self.airTime > 0:
+						self.velocity[0] += self.dash.velocity[0]
+						self.dash.reset()
+						self.dash.startCooldown(10)
 
-				if self.airTime > 0 and dir == 1:
-					self.velocity[0] += self.dash.velocity[0]
-					self.dash.reset()
-					self.dash.startCooldown(10)
+				self.velocity[dir] = 0
 
 
 	
@@ -376,7 +381,7 @@ class playerClass():
 
 		scrn.blit(image, rect)
 
-player = playerClass(pos=[0, 0])
+player = playerClass(pos=[0, 0], inList=tasInputs)
 
 
 
