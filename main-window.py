@@ -7,7 +7,7 @@ pygame.init()
 pygame.display.set_caption("PLATFORMER")
 
 refScreenSize = [800, 450]
-screen = pygame.display.set_mode(refScreenSize)
+screen = pygame.display.set_mode([1600, 900])
 resolutionScaling = screen.get_height()/refScreenSize[1]
 resolutionScaling_alt = screen.get_width()/refScreenSize[0]
 
@@ -120,8 +120,10 @@ class dashClass():
 
 	# dash function
 	def initiate(self, direction, dashSpeed=10, length=5):
-		if direction[0] == direction[1] and direction[0] == 0:
+		if direction[0] == direction[1] and direction[0] == 0 or direction[1] == -1 and player.airTime == 0:
 			return
+
+		player.dashInitiated()
 		
 		for i in range(len(self.velocity)):
 			self.velocity[i] = direction[i]*dashSpeed
@@ -145,11 +147,15 @@ class dashClass():
 			self.timer = 0
 		
 		if self.timer == 0:
+			timerDecrease = 1
 			for i in range(len(self.velocity)):
-				if self.velocity[i] > 0:
-					self.velocity[i] -= 1
-				if self.velocity[i] < 0:
+				if abs(self.velocity[i]) <= timerDecrease:
 					self.velocity[i] = 0
+				else:
+					if self.velocity[i] > 0:
+						self.velocity[i] -= timerDecrease
+					if self.velocity[i] < 0:
+						self.velocity[i] += timerDecrease
 
 		if self.cooldown > 0:
 			self.cooldown -= 1
@@ -216,6 +222,13 @@ class playerClass():
 
 		if self.inputValues[6] == 1 and self.dash.timer == 0 and self.dash.cooldown == 0:
 			self.dash.initiate([self.inputValues[3]-self.inputValues[2], self.inputValues[0]-self.inputValues[1]])
+
+		jumpForce = 10
+		if self.inputValues[5] == 1 and self.airTime == 0:
+			self.velocity[1] = jumpForce
+
+		walkSpeed = 5
+		self.velocity[0] = (self.inputValues[3] - self.inputValues[2])*walkSpeed
 	
 
 
@@ -230,9 +243,7 @@ class playerClass():
 		defaultGravity = .5
 		gravity = defaultGravity
 		
-		if self.dash.timer > 0:
-			self.velocity[1] = self.dash.velocity[1]
-		else:
+		if self.dash.timer == 0:
 			self.velocity[1] -= gravity
 
 
@@ -243,13 +254,18 @@ class playerClass():
 		# vertical movement + collision
 		inVel = self.velocity[1] + self.dash.velocity[1]
 		self.collisionNormal(1, geo, inVel)
+
+
+
+	def dashInitiated(self):
+		self.velocity[1] = 0
 	
 
 
 	def collisionNormal(self, dir, geo, vel):
 		velocity = int(vel)
 		velDist = abs(velocity)
-		if dir == 1 and velDist > 0:
+		if dir == 1 and (velDist > 0 or self.airTime > 0):
 			self.airTime += 1
 		for i in range(velDist):
 			lastPos = self.pos[dir]
@@ -267,6 +283,7 @@ class playerClass():
 				else:
 					collided = 1
 
+	
 			if collided == 1:
 				self.pos[dir] = lastPos
 
@@ -276,8 +293,8 @@ class playerClass():
 				self.velocity[dir] = 0
 				if dir == 0:
 					print("col")
-				#to stop checking other lines for collision
-				# return
+
+				self.dash.reset()
 
 
 	
