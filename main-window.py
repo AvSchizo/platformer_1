@@ -345,8 +345,6 @@ class playerClass():
 					self.dash.dashes = 1
 
 				self.velocity[dir] = 0
-				if dir == 0:
-					print("col")
 
 				if self.airTime > 0 and dir == 1:
 					self.velocity[0] += self.dash.velocity[0]
@@ -435,7 +433,6 @@ while True:
 
 
 
-	screen.fill((0, 0, 0))
 
 	player.dash.update()
 	player.dealWithInputs()
@@ -443,14 +440,14 @@ while True:
 	player.updatePhysics()
 
 
-	# print(camera.left)
-	# print(player.pos[0])
 	if player.pos[0] < camera.left:
 		camera.pos[0] = player.pos[0] - camera.width/2
 	if player.pos[0] > camera.right:
 		camera.pos[0] = player.pos[0] + camera.width/2
 	camera.update()
 
+
+	screen.fill((0, 0, 10))
 
 	player.draw()
 
