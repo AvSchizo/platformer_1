@@ -16,9 +16,63 @@ clock = pygame.time.Clock()
 
 
 
-tasInputs = [
-	[0, 0, 0, 0, 0, 0, 0, 0],
-]
+
+def getTASInputs(file):
+	with open (file, "r") as f:
+		tfl = f.read().splitlines()
+	
+	toReturn = []
+	for l in tfl:
+
+		if l == "empty" or l == "":
+			toReturn.append([0, 0, 0, 0, 0, 0, 0, 0])
+
+		# left side
+		elif l == "left":
+			toReturn.append([0, 0, 1, 0, 0, 0, 0, 0])
+
+		elif l == "lump":
+			toReturn.append([0, 0, 1, 0, 0, 1, 0, 0])
+
+		elif l == "run left":
+			toReturn.append([0, 0, 1, 0, 1, 0, 0, 0])
+
+		elif l == "run lump":
+			toReturn.append([0, 0, 1, 0, 1, 1, 0, 0])
+
+		elif l == "full left":
+			toReturn.append([0, 0, 1, 0, 1, 0, 1, 0])
+
+		# right side
+		elif l == "right":
+			toReturn.append([0, 0, 0, 1, 0, 0, 0, 0])
+
+		elif l == "rump":
+			toReturn.append([0, 0, 0, 1, 0, 1, 0, 0])
+
+		elif l == "run right":
+			toReturn.append([0, 0, 0, 1, 1, 0, 0, 0])
+
+		elif l == "run rump":
+			toReturn.append([0, 0, 0, 1, 1, 1, 0, 0])
+
+		elif l == "full right":
+			toReturn.append([0, 0, 0, 1, 1, 0, 1, 0])
+		
+		# neutral
+		elif l == "jump":
+			toReturn.append([0, 0, 0, 0, 0, 1, 0, 0])
+
+
+		else:
+			tempList1 = []
+			for n in l.split():
+				tempList1.append(int(n))
+			toReturn.append(tempList1)
+	
+	return toReturn
+
+tasInputs = getTASInputs("TAS_file")
 
 
 
@@ -64,7 +118,7 @@ class cameraClass():
 		self.pos[1] = object.pos[1]
 
 # special camera for codehs, get rid of size=[400, 450] at home
-camera = cameraClass(size=[400, 450])
+camera = cameraClass(size=[400, 400])
 
 
 
@@ -136,6 +190,8 @@ class dashClass():
 	# dash function
 	def initiate(self, direction, player, dashSpeed=10, length=10):
 		if direction[0] == direction[1] and direction[0] == 0 or direction[1] == -1 and player.airTime == 0 or self.dashes == 0:
+			return
+		if direction[1] >= 0 and direction[0] == 0:
 			return
 
 		if player.airTime > 0:
@@ -251,7 +307,7 @@ class playerClass():
 		else:
 			self.jumpHigher = 1
 		jumpForce = 15
-		if self.inputValues[5] == 1 and self.airTime == 0:
+		if self.inputValues[5] == 1 and self.airTime < 3:
 			self.jump(jumpForce)
 		# if self.jumpHigher == 1 and self.airTime > 0:
 		# 	self.velocity[1] += .5
@@ -404,6 +460,7 @@ def findIndex_dict(toFind, dict):
 
 
 TAS = False
+TASedit = True
 totalInputList = []
 
 playerInputs = {
@@ -450,10 +507,19 @@ while True:
 
 
 	if player.pos[0] < camera.left:
-		camera.pos[0] = player.pos[0] - camera.width/2
+		camera.pos[0] -= camera.width
 	if player.pos[0] > camera.right:
-		camera.pos[0] = player.pos[0] + camera.width/2
-	camera.follow(player)
+		camera.pos[0] += camera.width
+	
+	if player.pos[1] < camera.bottom:
+		camera.pos[1] -= camera.height
+	if player.pos[1] > camera.top:
+		camera.pos[1] += camera.height
+
+	cameraFollowPlayer = False
+	if cameraFollowPlayer:
+		camera.follow(player)
+
 	camera.update()
 
 
@@ -467,4 +533,6 @@ while True:
 
 
 	pygame.display.update()
+	if TASedit:
+		input(currentFrame)
 	clock.tick(FPS)
