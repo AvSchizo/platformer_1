@@ -75,7 +75,10 @@ def getTASInputs(file):
 	
 	return toReturn
 
-tasInputs = getTASInputs("TAS_file")
+if TAS:
+	tasInputs = getTASInputs("TAS_file")
+else:
+	tasInputs = []
 
 
 
