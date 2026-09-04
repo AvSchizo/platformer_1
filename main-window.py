@@ -144,7 +144,10 @@ class dashClass():
 		player.dashInitiated()
 		
 		for i in range(len(self.velocity)):
-			self.velocity[i] = direction[i]*dashSpeed
+			if i == 1 and direction[1] >= 0:
+				pass
+			else:
+				self.velocity[i] = direction[i]*dashSpeed
 
 		self.timer = length
 	
@@ -250,11 +253,11 @@ class playerClass():
 		jumpForce = 15
 		if self.inputValues[5] == 1 and self.airTime == 0:
 			self.jump(jumpForce)
-		if self.jumpHigher == 1 and self.airTime > 0:
-			self.velocity[1] += .5
+		# if self.jumpHigher == 1 and self.airTime > 0:
+		# 	self.velocity[1] += .5
 
 		acceleration = 1
-		deceleration = .8
+		deceleration = .5
 		walkSpeed = 5
 		if self.inputValues[2] == 1 and self.velocity[0] > -1*walkSpeed*(self.inputValues[4]+1):
 			self.velocity[0] -= acceleration
@@ -279,7 +282,7 @@ class playerClass():
 
 
 	def jump(self, force=10):
-		self.extraJumpForce = 8
+		self.extraJumpForce = 7
 		self.velocity[1] = force
 	
 
@@ -292,10 +295,10 @@ class playerClass():
 			geo = opgeo
 
 
-		defaultGravity = 1.5
+		defaultGravity = 1
 		gravity = defaultGravity
 
-		if self.airTime > 2 or self.jumpHigher == 0:
+		if self.airTime > 4 or self.jumpHigher == 0:
 			self.extraJumpForce = 0
 		
 		if self.dash.timer == 0:
@@ -350,9 +353,10 @@ class playerClass():
 					self.dash.dashes = 1
 
 					if self.airTime > 0:
-						self.velocity[0] += self.dash.velocity[0]
+						self.velocity[0] += self.dash.velocity[0]*1.5
 						self.dash.reset()
-						self.dash.startCooldown(10)
+						if self.dash.cooldown > 10:
+							self.dash.startCooldown(10)
 
 				self.velocity[dir] = 0
 
@@ -449,6 +453,7 @@ while True:
 		camera.pos[0] = player.pos[0] - camera.width/2
 	if player.pos[0] > camera.right:
 		camera.pos[0] = player.pos[0] + camera.width/2
+	camera.follow(player)
 	camera.update()
 
 
