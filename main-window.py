@@ -16,6 +16,9 @@ clock = pygame.time.Clock()
 
 
 
+TAS = False
+TASedit = False
+
 
 def getTASInputs(file):
 	with open (file, "r") as f:
@@ -252,7 +255,7 @@ class dashClass():
 
 class playerClass():
 
-	def __init__(self, pos=[0, 0], inList=[]):
+	def __init__(self, pos=[0, 0], inList=[], tason=False):
 
 		self.dash = dashClass()
 
@@ -264,7 +267,10 @@ class playerClass():
 		self.airTime = 0
 		self.extraJumpForce = 0
 
-		self.totalInputList = inList
+		if tason:
+			self.totalInputList = inList
+		else:
+			self.totalInputList = []
 
 
 
@@ -441,7 +447,7 @@ class playerClass():
 
 		scrn.blit(image, rect)
 
-player = playerClass(pos=[0, 0], inList=tasInputs)
+player = playerClass(pos=[0, 0], inList=tasInputs, tason=TAS)
 
 
 
@@ -459,9 +465,6 @@ def findIndex_dict(toFind, dict):
 	print("debug (findIndex_dict): findIndex_dict returns nothing")
 
 
-TAS = False
-TASedit = True
-totalInputList = []
 
 playerInputs = {
 	"up": pygame.K_UP,
@@ -486,6 +489,14 @@ playerInputs = {
 FPS = 30
 
 currentFrame = 0
+
+if TASedit:
+	for i in range(int(input())-1):
+		currentFrame += 1
+		player.dash.update()
+		player.dealWithInputs()
+
+		player.updatePhysics()
 
 while True:
 
