@@ -124,7 +124,7 @@ class cameraClass():
 		self.pos[1] = object.pos[1]
 
 # special camera for codehs, get rid of size=[400, 450] at home
-camera = cameraClass(size=[400, 400])
+camera = cameraClass(size=[screen.get_width()-50, screen.get_height()-50])
 
 
 
@@ -371,6 +371,8 @@ class playerClass():
 				self.velocity[1] -= gravity*3
 			else:
 				self.velocity[1] -= gravity
+		else:
+			self.velocity[1] = 0
 
 
 		# horizontal movement + collision
