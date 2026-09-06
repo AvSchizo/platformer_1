@@ -506,7 +506,6 @@ currentFrame = 0
 
 if TASedit > 0:
 	if TASedit == 1:
-		print(argv)
 		try:
 			toRepeat = int(argv[1])
 		except:
@@ -524,7 +523,7 @@ while True:
 
 	frameEvents = pygame.event.get()
 	for event in frameEvents:
-		if event.type == pygame.QUIT:
+		if event.type == pygame.QUIT or event.type == pygame.KEYDOWN and event.key == pygame.K_q:
 			exit()
 
 		if TASedit == 1 and event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
