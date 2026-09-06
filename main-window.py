@@ -16,8 +16,8 @@ clock = pygame.time.Clock()
 
 
 
-TAS = True
-TASedit = 1
+TAS = False
+TASedit = 0
 
 
 def getTASInputs(file):
@@ -176,7 +176,10 @@ mapGeo_loaded = [
 	mglc([(100, 0), (200, 0)]),
 	mglc([(200, -100), (200, 0)]),
 	mglc([(150, 100), (150, 30)]),
-	mglc([(-200, 200), (-100, 200)]),
+	mglc([(-200, 225), (-100, 225)]),
+	mglc([(100, 350), (250, 350)]),
+	mglc([(350, 325), (350, 500)]),
+	mglc([(400, 275), (500, 275)]),
 ]
 
 
@@ -432,6 +435,10 @@ class playerClass():
 						self.dash.reset()
 						if self.dash.cooldown > 10:
 							self.dash.startCooldown(10)
+
+				if dir == 0:
+					if self.dash.velocity[0] > 0 and self.dash.cooldown > 0:
+						self.dash.velocity[0] = 0
 
 				self.velocity[dir] = 0
 
