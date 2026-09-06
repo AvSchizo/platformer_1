@@ -1,6 +1,6 @@
 import pygame
 import random
-from sys import exit
+from sys import exit, argv
 
 
 pygame.init()
@@ -505,7 +505,15 @@ FPS = 30
 currentFrame = 0
 
 if TASedit > 0:
-	for i in range(int(input())-(1-TASedit)):
+	if TASedit == 1:
+		print(argv)
+		try:
+			toRepeat = int(argv[1])
+		except:
+			toRepeat = 0
+	if TASedit == 2:
+		toRepeat = int(input())-1
+	for i in range(toRepeat):
 		currentFrame += 1
 		frameHappenings()
 
