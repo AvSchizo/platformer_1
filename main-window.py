@@ -16,8 +16,8 @@ clock = pygame.time.Clock()
 
 
 
-TAS = False
-TASedit = False
+TAS = True
+TASedit = 1
 
 
 def getTASInputs(file):
@@ -79,6 +79,15 @@ if TAS:
 	tasInputs = getTASInputs("TAS_file")
 else:
 	tasInputs = []
+
+
+
+
+def frameHappenings():
+	player.dash.update()
+	player.dealWithInputs()
+
+	player.updatePhysics()
 
 
 
@@ -495,17 +504,14 @@ FPS = 30
 
 currentFrame = 0
 
-if TASedit:
-	for i in range(int(input())-1):
+if TASedit > 0:
+	for i in range(int(input())-(1-TASedit)):
 		currentFrame += 1
-		player.dash.update()
-		player.dealWithInputs()
-
-		player.updatePhysics()
+		frameHappenings()
 
 while True:
 
-	currentFrame += 1
+	
 
 
 	frameEvents = pygame.event.get()
@@ -513,13 +519,16 @@ while True:
 		if event.type == pygame.QUIT:
 			exit()
 
+		if TASedit == 1 and event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+			currentFrame += 1
+			frameHappenings()
+			print(currentFrame)
 
 
 
-	player.dash.update()
-	player.dealWithInputs()
-
-	player.updatePhysics()
+	if TASedit != 1:
+		currentFrame += 1
+		frameHappenings()
 
 
 	if player.pos[0] < camera.left:
@@ -549,6 +558,6 @@ while True:
 
 
 	pygame.display.update()
-	if TASedit:
+	if TASedit == 2:
 		input(currentFrame)
 	clock.tick(FPS)
