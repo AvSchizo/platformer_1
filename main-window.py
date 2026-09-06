@@ -175,9 +175,8 @@ mapGeo_loaded = [
 	mglc([(100, -100), (100, 0)]),
 	mglc([(100, 0), (200, 0)]),
 	mglc([(200, -100), (200, 0)]),
-	mglc([(-100, 30), (-50, 30)]),
 	mglc([(150, 100), (150, 30)]),
-	mglc([(-100, 60), (-50, 60)]),
+	mglc([(-200, 200), (-100, 200)]),
 ]
 
 
@@ -548,7 +547,7 @@ while True:
 	if player.pos[1] > camera.top:
 		camera.pos[1] += camera.height
 
-	cameraFollowPlayer = False
+	cameraFollowPlayer = True
 	if cameraFollowPlayer:
 		camera.follow(player)
 
