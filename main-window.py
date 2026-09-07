@@ -1,6 +1,7 @@
 import pygame
 import random
 from sys import exit, argv
+from copy import deepcopy
 
 
 pygame.init()
@@ -86,8 +87,8 @@ else:
 def frameHappenings():
 	player.dash.update()
 	player.dealWithInputs()
-
 	player.updatePhysics()
+	player.checkForDeath()
 
 
 
@@ -169,18 +170,14 @@ class mglc():
 		pygame.draw.line(scrn, (255, 255, 255), (scrn.get_width()/2+(pointA[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointA[1]-cam.pos[1])*scaling), (scrn.get_width()/2+(pointB[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointB[1]-cam.pos[1])*scaling), 1)
 
 
-### TEST LEVEL ###
-mapGeo_loaded = [
-	mglc([(-800, -100), (5000, -100)]),
-	mglc([(100, -100), (100, 0)]),
-	mglc([(100, 0), (200, 0)]),
-	mglc([(200, -100), (200, 0)]),
-	mglc([(150, 100), (150, 30)]),
-	mglc([(-200, 225), (-100, 225)]),
-	mglc([(100, 350), (250, 350)]),
-	mglc([(350, 325), (350, 500)]),
-	mglc([(400, 275), (500, 275)]),
-]
+
+
+### CHECKPOINTS ###
+class checkpointClass():
+
+	def __init__(self, area, point):
+		self.area = area
+		self.respawn = point
 
 
 
@@ -269,22 +266,29 @@ class dashClass():
 
 class playerClass():
 
-	def __init__(self, pos=[0, 0], inList=[], tason=False):
+	def __init__(self, eep=[0, 0], inList=[], tason=False):
 
-		self.dash = dashClass()
-
-		self.pos = pos
 		self.z = 0
 		self.size = [25, 25]
 
-		self.velocity = [0, 0]
-		self.airTime = 0
-		self.extraJumpForce = 0
 
 		if tason:
 			self.totalInputList = inList
 		else:
 			self.totalInputList = []
+
+		self.checkpointIndex = 0
+		self.lastCheckpoint = eep
+		self.respawn()
+
+
+
+	def reset(self):
+
+		self.velocity = [0, 0]
+		self.airTime = 0
+		self.extraJumpForce = 0
+		self.dash = dashClass()
 
 
 
@@ -335,14 +339,14 @@ class playerClass():
 		acceleration = 1
 		deceleration = .5
 		walkSpeed = 5
-		if self.inputValues[2] == 1 and self.velocity[0] > -1*walkSpeed*(self.inputValues[4]+1):
-			self.velocity[0] -= acceleration
+		if self.inputValues[2] == 1 and self.velocity[0] > -1*walkSpeed*(self.inputValues[4]*1.5+1):
+			self.velocity[0] -= acceleration*(self.inputValues[4]+1)
 			if self.velocity[0] > 0:
-				self.velocity[0] -= acceleration
-		if self.inputValues[3] == 1 and self.velocity[0] < walkSpeed*(self.inputValues[4]+1):
-			self.velocity[0] += acceleration
+				self.velocity[0] -= acceleration*(self.inputValues[4]+1)
+		if self.inputValues[3] == 1 and self.velocity[0] < walkSpeed*(self.inputValues[4]*1.5+1):
+			self.velocity[0] += acceleration*(self.inputValues[4]+1)
 			if self.velocity[0] < 0:
-				self.velocity[0] += acceleration
+				self.velocity[0] += acceleration*(self.inputValues[4]+1)
 
 		if self.inputValues[2] + self.inputValues[3] == 0:
 			if abs(self.velocity[0]) <= 1:
@@ -394,6 +398,15 @@ class playerClass():
 		inVel = self.velocity[1] + self.dash.velocity[1] + self.extraJumpForce
 		self.collisionNormal(1, geo, inVel)
 
+		while True:
+			collided = 0
+			for line in geo:
+				if self.amTouchingGeo(line):
+					collided = 1
+			if collided == 0:
+				break
+			self.pos[1] += 1
+
 
 
 	def dashInitiated(self):
@@ -411,15 +424,7 @@ class playerClass():
 			self.pos[dir] += velocity/velDist
 			collided = 0
 			for line in geo:
-				pointA = line.points[0]
-				pointB = line.points[1]
-
-				# if both on one side
-				if abs(pointA[0]-self.pos[0]) > self.size[0]/2 and abs(pointB[0]-self.pos[0]) > self.size[0]/2 and (pointA[0]-self.pos[0])*(pointB[0]-self.pos[0]) >= 0:
-					pass
-				elif abs(pointA[1]-self.pos[1]) > self.size[1]/2 and abs(pointB[1]-self.pos[1]) > self.size[1]/2 and (pointA[1]-self.pos[1])*(pointB[1]-self.pos[1]) >= 0:
-					pass
-				else:
+				if self.amTouchingGeo(line):
 					collided = 1
 
 	
@@ -441,6 +446,58 @@ class playerClass():
 						self.dash.velocity[0] = 0
 
 				self.velocity[dir] = 0
+
+
+
+	def amTouchingGeo(self, line):
+		pointA = line.points[0]
+		pointB = line.points[1]
+
+		# if both on one side
+		if abs(pointA[0]-self.pos[0]) > self.size[0]/2 and abs(pointB[0]-self.pos[0]) > self.size[0]/2 and (pointA[0]-self.pos[0])*(pointB[0]-self.pos[0]) >= 0:
+			return False
+		elif abs(pointA[1]-self.pos[1]) > self.size[1]/2 and abs(pointB[1]-self.pos[1]) > self.size[1]/2 and (pointA[1]-self.pos[1])*(pointB[1]-self.pos[1]) >= 0:
+			return False
+		else:
+			return True
+
+
+
+	def checkpointCollision(self, list):
+		for i in range(len(list)):
+
+			if i < self.checkpointIndex:
+				continue
+
+			c = list[i]
+
+			left = self.pos[0]-self.size[0]/2
+			right = self.pos[0]+self.size[0]/2
+			bottom = self.pos[1]-self.size[1]/2
+			top = self.pos[1]+self.size[1]/2
+
+			cleft = min(c.area[0][0], c.area[1][0])
+			cright = max(c.area[0][0], c.area[1][0])
+			cbottom = min(c.area[0][1], c.area[1][1])
+			ctop = max(c.area[0][1], c.area[1][1])
+
+			if (left > cleft and left < cright or right < cright and right > cleft) and (bottom > cbottom and bottom < ctop or top < ctop and top > cbottom):
+				self.checkpointIndex = i
+				self.lastCheckpoint = c.respawn
+
+
+
+	def checkForDeath(self):
+		# this is for test, replace with list of stage hazards
+		if self.pos[1] <= -500:
+			self.respawn()
+
+
+
+	def respawn(self):
+
+		self.pos = deepcopy(self.lastCheckpoint)
+		self.reset()
 
 
 	
@@ -467,7 +524,7 @@ class playerClass():
 
 		scrn.blit(image, rect)
 
-player = playerClass(pos=[0, 0], inList=tasInputs, tason=TAS)
+player = playerClass(eep=[0, 0], inList=tasInputs, tason=TAS)
 
 
 
@@ -501,6 +558,18 @@ playerInputs = {
 
 
 
+### TEST LEVEL ###
+mapGeo_loaded = [
+	mglc([(-800, -100), (5000, -100)]),
+	mglc([(100, -100), (100, 0)]),
+	mglc([(100, 0), (200, 0)]),
+	mglc([(200, -100), (200, 0)]),
+	mglc([(150, 100), (150, 30)]),
+	mglc([(-200, 225), (-100, 225)]),
+	mglc([(100, 350), (250, 350)]),
+	mglc([(350, 325), (350, 500)]),
+	mglc([(400, 275), (500, 275)]),
+]
 
 
 
