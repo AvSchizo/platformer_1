@@ -88,7 +88,8 @@ def frameHappenings():
 	player.dash.update()
 	player.dealWithInputs()
 	player.updatePhysics()
-	player.checkForDeath()
+	player.checkpointCollision(checkpointList)
+	player.checkDeathPlanes()
 
 
 
@@ -142,11 +143,13 @@ camera = cameraClass(size=[screen.get_width()-50, screen.get_height()-50])
 # mglc: mapGeoLineClass
 class mglc():
 
-	def __init__(self, points, direction=None):
+	def __init__(self, points, direction=None, color=(255, 255, 255)):
 
 		self.points = points
 
 		self.direction = direction
+
+		self.color = color
 	
 
 
@@ -167,17 +170,19 @@ class mglc():
 		pointB = self.points[1]
 
 		scaling = cam.getScaling()*resolutionScaling
-		pygame.draw.line(scrn, (255, 255, 255), (scrn.get_width()/2+(pointA[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointA[1]-cam.pos[1])*scaling), (scrn.get_width()/2+(pointB[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointB[1]-cam.pos[1])*scaling), 1)
+		pygame.draw.line(scrn, self.color, (scrn.get_width()/2+(pointA[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointA[1]-cam.pos[1])*scaling), (scrn.get_width()/2+(pointB[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointB[1]-cam.pos[1])*scaling), 1)
 
 
 
 
 ### CHECKPOINTS ###
-class checkpointClass():
+# checkpointClass
+class cpc():
 
 	def __init__(self, area, point):
-		self.area = area
 		self.respawn = point
+		# area goes: [topleft, bottomright]
+		self.area = area
 
 
 
@@ -214,8 +219,11 @@ class dashClass():
 		player.dashInitiated()
 		
 		for i in range(len(self.velocity)):
-			if i == 1 and direction[1] >= 0:
-				pass
+			if i == 1:
+				if direction[1] >= 0:
+					pass
+				else:
+					self.velocity[i] = dashSpeed*(-2)
 			else:
 				self.velocity[i] = direction[i]*dashSpeed
 
@@ -238,15 +246,15 @@ class dashClass():
 			self.timer = 0
 		
 		if self.timer == 0:
-			timerDecrease = 1
+			speedDecrease = 2
 			for i in range(len(self.velocity)):
-				if abs(self.velocity[i]) <= timerDecrease:
+				if abs(self.velocity[i]) <= speedDecrease:
 					self.velocity[i] = 0
 				else:
 					if self.velocity[i] > 0:
-						self.velocity[i] -= timerDecrease
+						self.velocity[i] -= speedDecrease
 					if self.velocity[i] < 0:
-						self.velocity[i] += timerDecrease
+						self.velocity[i] += speedDecrease
 
 		if self.cooldown > 0:
 			self.cooldown -= 1
@@ -362,7 +370,7 @@ class playerClass():
 
 
 	def jump(self, force=10):
-		self.extraJumpForce = 7
+		self.extraJumpForce = 4
 		self.velocity[1] = force
 	
 
@@ -378,7 +386,7 @@ class playerClass():
 		defaultGravity = 1
 		gravity = defaultGravity
 
-		if self.airTime > 4 or self.jumpHigher == 0:
+		if self.airTime > 6 or self.jumpHigher == 0:
 			self.extraJumpForce = 0
 		
 		if self.dash.timer == 0:
@@ -432,17 +440,21 @@ class playerClass():
 				self.pos[dir] = lastPos
 
 				if dir == 1 and velocity < 0:
-					self.airTime = 0
 					self.dash.dashes = 1
 
 					if self.airTime > 0:
-						self.velocity[0] += self.dash.velocity[0]*1.5
-						self.dash.reset()
-						if self.dash.cooldown > 10:
+						if self.velocity[0] < self.dash.velocity[0]:
+							self.velocity[0] += self.dash.velocity[0]*1.5
+						if self.dash.velocity[1] < 0:
+							self.dash.reset()
 							self.dash.startCooldown(10)
+						else:
+							self.dash.reset()
+
+					self.airTime = 0
 
 				if dir == 0:
-					if self.dash.velocity[0] > 0 and self.dash.cooldown > 0:
+					if self.dash.cooldown > 0:
 						self.dash.velocity[0] = 0
 
 				self.velocity[dir] = 0
@@ -476,20 +488,20 @@ class playerClass():
 			bottom = self.pos[1]-self.size[1]/2
 			top = self.pos[1]+self.size[1]/2
 
-			cleft = min(c.area[0][0], c.area[1][0])
-			cright = max(c.area[0][0], c.area[1][0])
-			cbottom = min(c.area[0][1], c.area[1][1])
-			ctop = max(c.area[0][1], c.area[1][1])
+			cleft = c.area[0][0]
+			cright = c.area[1][0]
+			cbottom = c.area[1][1]
+			ctop = c.area[0][1]
 
-			if (left > cleft and left < cright or right < cright and right > cleft) and (bottom > cbottom and bottom < ctop or top < ctop and top > cbottom):
+			if (left < cright and right > cleft) and (bottom < ctop and top > cbottom):
 				self.checkpointIndex = i
 				self.lastCheckpoint = c.respawn
 
 
 
-	def checkForDeath(self):
+	def checkDeathPlanes(self):
 		# this is for test, replace with list of stage hazards
-		if self.pos[1] <= -500:
+		if self.pos[1] <= -200:
 			self.respawn()
 
 
@@ -558,17 +570,23 @@ playerInputs = {
 
 
 
-### TEST LEVEL ###
+##### TEST LEVEL #####
 mapGeo_loaded = [
-	mglc([(-800, -100), (5000, -100)]),
+	mglc([(-200, -100), (200, -100)]),
 	mglc([(100, -100), (100, 0)]),
 	mglc([(100, 0), (200, 0)]),
 	mglc([(200, -100), (200, 0)]),
 	mglc([(150, 100), (150, 30)]),
 	mglc([(-200, 225), (-100, 225)]),
-	mglc([(100, 350), (250, 350)]),
-	mglc([(350, 325), (350, 500)]),
-	mglc([(400, 275), (500, 275)]),
+	mglc([(0, 350), (150, 350)]),
+	mglc([(250, 325), (250, 475)]),
+	mglc([(300, 275), (500, 275)]),
+	mglc([(600, 400), (650, 400)]),
+	mglc([(1100, 250), (1250, 250)], color=(50, 50, 255)),
+]
+
+checkpointList = [
+	cpc([(1100, 500), (1250, 250)], [1175, 350])
 ]
 
 
@@ -623,7 +641,7 @@ while True:
 	if player.pos[1] > camera.top:
 		camera.pos[1] += camera.height
 
-	cameraFollowPlayer = True
+	cameraFollowPlayer = False
 	if cameraFollowPlayer:
 		camera.follow(player)
 
