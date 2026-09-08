@@ -362,18 +362,19 @@ class playerClass():
 		acceleration = 1
 		deceleration = .5
 		walkSpeed = 5
+		wsiv = walkSpeed*(self.inputValues[4]+1)
 		# left
-		if self.inputValues[2] == 1 and self.velocity[0] > -1*walkSpeed*(self.inputValues[4]*1.5+1):
+		if self.inputValues[2] == 1 and self.velocity[0] > -1*wsiv:
 			self.velocity[0] -= acceleration*(self.inputValues[4]+1)
-			if self.velocity[0] < -1*walkSpeed*(self.inputValues[4]*1.5+1):
-				self.velocity[0] = -1*walkSpeed*(self.inputValues[4]*1.5+1)
+			if self.velocity[0] < -1*wsiv:
+				self.velocity[0] = -1*wsiv
 			if self.velocity[0] > 0:
 				self.velocity[0] -= acceleration*(self.inputValues[4]+1)
 		# right
-		if self.inputValues[3] == 1 and self.velocity[0] < walkSpeed*(self.inputValues[4]*1.5+1):
+		if self.inputValues[3] == 1 and self.velocity[0] < wsiv:
 			self.velocity[0] += acceleration*(self.inputValues[4]+1)
-			if self.velocity[0] > walkSpeed*(self.inputValues[4]*1.5+1):
-				self.velocity[0] = walkSpeed*(self.inputValues[4]*1.5+1)
+			if self.velocity[0] > wsiv:
+				self.velocity[0] = wsiv
 			if self.velocity[0] < 0:
 				self.velocity[0] += acceleration*(self.inputValues[4]+1)
 
