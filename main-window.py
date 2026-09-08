@@ -17,7 +17,7 @@ clock = pygame.time.Clock()
 
 
 
-TAS = False
+TAS = True
 TASedit = 0
 
 
@@ -90,6 +90,21 @@ def frameHappenings():
 	player.updatePhysics()
 	player.checkpointCollision(checkpointList)
 	player.checkDeathPlanes()
+
+
+
+
+# DEBUG
+# 1 is to print gamestate, 2 is to display it on screen
+debug = 1
+def debug_print(seperated=True):
+	if seperated:
+		print("_________")
+	print(currentFrame)
+	print(f"Xpos: {player.pos[0]}")
+	print(f"Ypos: {player.pos[1]}")
+	print(f"Xvel: {player.velocity[0]}")
+	print(f"Yvel: {player.velocity[1]}")
 
 
 
@@ -347,12 +362,18 @@ class playerClass():
 		acceleration = 1
 		deceleration = .5
 		walkSpeed = 5
+		# left
 		if self.inputValues[2] == 1 and self.velocity[0] > -1*walkSpeed*(self.inputValues[4]*1.5+1):
 			self.velocity[0] -= acceleration*(self.inputValues[4]+1)
+			if self.velocity[0] < -1*walkSpeed*(self.inputValues[4]*1.5+1):
+				self.velocity[0] = -1*walkSpeed*(self.inputValues[4]*1.5+1)
 			if self.velocity[0] > 0:
 				self.velocity[0] -= acceleration*(self.inputValues[4]+1)
+		# right
 		if self.inputValues[3] == 1 and self.velocity[0] < walkSpeed*(self.inputValues[4]*1.5+1):
 			self.velocity[0] += acceleration*(self.inputValues[4]+1)
+			if self.velocity[0] > walkSpeed*(self.inputValues[4]*1.5+1):
+				self.velocity[0] = walkSpeed*(self.inputValues[4]*1.5+1)
 			if self.velocity[0] < 0:
 				self.velocity[0] += acceleration*(self.inputValues[4]+1)
 
@@ -597,17 +618,17 @@ FPS = 30
 
 currentFrame = 0
 
-if TASedit > 0:
-	if TASedit == 1:
-		try:
-			toRepeat = int(argv[1])
-		except:
-			toRepeat = 0
-	if TASedit == 2:
-		toRepeat = int(input())-1
-	for i in range(toRepeat):
-		currentFrame += 1
-		frameHappenings()
+toRepeat = 0
+if TASedit == 1 or TAS:
+	try:
+		toRepeat = int(argv[1])
+	except:
+		toRepeat = 0
+if TASedit == 2:
+	toRepeat = int(input())-1
+for i in range(toRepeat):
+	currentFrame += 1
+	frameHappenings()
 
 while True:
 
@@ -641,8 +662,11 @@ while True:
 	if player.pos[1] > camera.top:
 		camera.pos[1] += camera.height
 
-	cameraFollowPlayer = False
-	if cameraFollowPlayer:
+	if TASedit > 0:
+		cameraFollowPlayer = True
+	else:
+		cameraFollowPlayer = False
+	if cameraFollowPlayer and currentFrame % 1 == 0:
 		camera.follow(player)
 
 	camera.update()
@@ -658,6 +682,8 @@ while True:
 
 
 	pygame.display.update()
+	if debug == 1 and TASedit > 0:
+		debug_print()
 	if TASedit == 2:
-		input(currentFrame)
+		input()
 	clock.tick(FPS)
