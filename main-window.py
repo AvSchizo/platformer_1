@@ -100,6 +100,7 @@ debug = 1
 def debug_print(seperated=True):
 	if seperated:
 		print("_________")
+	print(player.totalInputList[currentFrame-1])
 	print(currentFrame)
 	print(f"Xpos: {player.pos[0]}")
 	print(f"Ypos: {player.pos[1]}")
@@ -465,7 +466,7 @@ class playerClass():
 					self.dash.dashes = 1
 
 					if self.airTime > 0:
-						if self.velocity[0] < self.dash.velocity[0]:
+						if abs(self.velocity[0]) < abs(self.dash.velocity[0]):
 							self.velocity[0] += self.dash.velocity[0]*1.5
 						if self.dash.velocity[1] < 0:
 							self.dash.reset()
