@@ -17,8 +17,8 @@ clock = pygame.time.Clock()
 
 
 
-TAS = False
-TASedit = 0
+TAS = True
+TASedit = 1
 
 
 def getTASInputs(file):
