@@ -17,7 +17,7 @@ clock = pygame.time.Clock()
 
 
 
-TAS = True
+TAS = False
 TASedit = 0
 
 
