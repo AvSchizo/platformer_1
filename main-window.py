@@ -2,6 +2,7 @@ import pygame
 import random
 from sys import exit, argv
 from copy import deepcopy
+from math import atan, sin, cos, pi, sqrt
 
 
 pygame.init()
@@ -189,13 +190,65 @@ class mglc():
 
 
 
-# mdlc: mapDecorationLineClass
-class mdlc():
+# dac: directionArrowClass
+class dac():
 
-	def __init__(self, points, color=(0, 255, 0)):
+	def __init__(self, inpoints, scale=.2, useSpecSides=[False, False], specSides=[(0, 0), (0, 0)], color=(0, 255, 0)):
 
-		self.points = points
+		## finding direction
+		self.points = inpoints
 
+		# setup
+		A = inpoints[0]
+		B = inpoints[1]
+
+		w = B[0]-A[0]
+		h = B[1]-A[1]
+		if w == 0 and h == 0:
+			w = 1
+			h = 0
+		
+		v = sqrt(h**2 + w**2) * scale
+
+		# direction
+		if w == 0:
+			d = (h/abs(h)) * (pi/2)
+		elif h == 0:
+			d = (pi/2) - (w/abs(w))*(pi/2)
+		else:
+			atw = atan(abs(h)/abs(w))
+			
+			if h > 0:
+				if w > 0:
+					d = atw
+				else:
+					d = atw + (pi/2)
+			
+			else:
+				if w < 0:
+					d = atw + pi
+				else:
+					d = atw + (3*pi/2)
+		
+		# other points
+		for i in range(2):
+			# subtracted angle on second 
+			e = i*-2 + 1
+
+			toAppend = [
+				B[0] + cos(d + e*(3*pi/4))*v,
+				B[1] + sin(d + e*(3*pi/4))*v
+			]
+
+			self.points.append(toAppend)
+
+		# specific sides
+		for i in range(2):
+			if useSpecSides[i]:
+				self.points[i] = specSides[i]
+
+
+		# other shit
 		self.color = color
 	
 
@@ -212,12 +265,16 @@ class mdlc():
 		else:
 			cam = opcam
 
+		scaling = cam.getScaling()*resolutionScaling
 
 		pointA = self.points[0]
 		pointB = self.points[1]
-
-		scaling = cam.getScaling()*resolutionScaling
+		pointC = self.points[2]
+		pointD = self.points[3]
+		
 		pygame.draw.line(scrn, self.color, (scrn.get_width()/2+(pointA[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointA[1]-cam.pos[1])*scaling), (scrn.get_width()/2+(pointB[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointB[1]-cam.pos[1])*scaling), 1)
+		pygame.draw.line(scrn, self.color, (scrn.get_width()/2+(pointC[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointC[1]-cam.pos[1])*scaling), (scrn.get_width()/2+(pointB[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointB[1]-cam.pos[1])*scaling), 1)
+		pygame.draw.line(scrn, self.color, (scrn.get_width()/2+(pointD[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointD[1]-cam.pos[1])*scaling), (scrn.get_width()/2+(pointB[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointB[1]-cam.pos[1])*scaling), 1)
 
 
 
@@ -648,12 +705,8 @@ checkpointList = [
 ]
 
 mapDecList = [
-	mdlc([(350, 310), (375, 310)]),
-	mdlc([(370, 315), (375, 310)]),
-	mdlc([(370, 305), (375, 310)]),
-	mdlc([(800, 250), (1000, 250)]),
-	mdlc([(1000, 250), (950, 300)]),
-	mdlc([(1000, 250), (950, 200)]),
+	dac([(350, 310), (375, 310)]),
+	dac([(800, 250), (1000, 250)]),
 ]
 
 
@@ -685,7 +738,7 @@ if TASedit == 2:
 	toRepeat = int(input())-1
 
 if levelEdit:
-	toRepeat = 10
+	toRepeat = 20
 
 for i in range(toRepeat):
 	currentFrame += 1
