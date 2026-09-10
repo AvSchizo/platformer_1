@@ -20,6 +20,7 @@ clock = pygame.time.Clock()
 
 TAS = False
 TASedit = 0
+levelEdit = True
 
 
 def getTASInputs(file):
@@ -136,14 +137,14 @@ class cameraClass():
 	def update(self):
 		camScaling = self.getScaling()
 
-		self.left = self.pos[0] - (self.size[0]/2 * camScaling)
-		self.right = self.pos[0] + (self.size[0]/2 * camScaling)
+		self.left = self.pos[0] - (self.size[0]/2 * (1/camScaling))
+		self.right = self.pos[0] + (self.size[0]/2 * (1/camScaling))
 
-		self.bottom = self.pos[1] - (self.size[1]/2 * camScaling)
-		self.top = self.pos[1] + (self.size[1]/2 * camScaling)
+		self.bottom = self.pos[1] - (self.size[1]/2 * (1/camScaling))
+		self.top = self.pos[1] + (self.size[1]/2 * (1/camScaling))
 
-		self.width = self.size[0]*camScaling
-		self.height = self.size[1]*camScaling
+		self.width = self.size[0]*(1/camScaling)
+		self.height = self.size[1]*(1/camScaling)
 	
 
 
@@ -151,8 +152,11 @@ class cameraClass():
 		self.pos[0] = object.pos[0]
 		self.pos[1] = object.pos[1]
 
-# special camera for codehs, get rid of size=[400, 450] at home
-camera = cameraClass(size=[screen.get_width()-50, screen.get_height()-50], pos=[0, 0, 30])
+if levelEdit:
+	camStartPos = [400, 0, 30]
+else:
+	camStartPos = [0, 0, 0]
+camera = cameraClass(size=[screen.get_width()-50, screen.get_height()-50], pos=camStartPos)
 
 
 
@@ -669,6 +673,10 @@ if TASedit == 1 or TAS:
 		toRepeat = 0
 if TASedit == 2:
 	toRepeat = int(input())-1
+
+if levelEdit:
+	toRepeat = 10
+
 for i in range(toRepeat):
 	currentFrame += 1
 	frameHappenings()
