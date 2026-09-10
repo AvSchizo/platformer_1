@@ -17,6 +17,7 @@ clock = pygame.time.Clock()
 
 
 
+
 TAS = False
 TASedit = 0
 
@@ -101,7 +102,7 @@ def debug_print(seperated=True):
 	if seperated:
 		print("_________")
 	print(player.totalInputList[currentFrame-1])
-	print(currentFrame)
+	print(f"current frame: {currentFrame}")
 	print(f"Xpos: {player.pos[0]}")
 	print(f"Ypos: {player.pos[1]}")
 	print(f"Xvel: {player.velocity[0]}")
@@ -151,7 +152,7 @@ class cameraClass():
 		self.pos[1] = object.pos[1]
 
 # special camera for codehs, get rid of size=[400, 450] at home
-camera = cameraClass(size=[screen.get_width()-50, screen.get_height()-50])
+camera = cameraClass(size=[screen.get_width()-50, screen.get_height()-50], pos=[0, 0, 30])
 
 
 
@@ -164,6 +165,38 @@ class mglc():
 		self.points = points
 
 		self.direction = direction
+
+		self.color = color
+	
+
+
+	def draw(self, opscrn=None, opcam=None):
+
+		if opscrn == None:
+			opscrn = screen
+		else:
+			scrn = opscrn
+
+		if opcam == None:
+			cam = camera
+		else:
+			cam = opcam
+
+
+		pointA = self.points[0]
+		pointB = self.points[1]
+
+		scaling = cam.getScaling()*resolutionScaling
+		pygame.draw.line(scrn, self.color, (scrn.get_width()/2+(pointA[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointA[1]-cam.pos[1])*scaling), (scrn.get_width()/2+(pointB[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointB[1]-cam.pos[1])*scaling), 1)
+
+
+
+# mdlc: mapDecorationLineClass
+class mdlc():
+
+	def __init__(self, points, color=(0, 255, 0)):
+
+		self.points = points
 
 		self.color = color
 	
@@ -386,9 +419,9 @@ class playerClass():
 				self.velocity[0] *= deceleration
 
 		if self.velocity[0] <= -1*walkSpeed*(self.inputValues[4]+1)-1:
-			self.velocity[0] += 1
+			self.velocity[0] += .5
 		if self.velocity[0] >= walkSpeed*(self.inputValues[4]+1)+1:
-			self.velocity[0] -= 1
+			self.velocity[0] -= .5
 	
 
 
@@ -466,7 +499,7 @@ class playerClass():
 					self.dash.dashes = 1
 
 					if self.airTime > 0:
-						if abs(self.velocity[0]) < abs(self.dash.velocity[0]):
+						if abs(self.velocity[0]) < abs(self.dash.velocity[0]) and self.dash.cooldown == 0:
 							self.velocity[0] += self.dash.velocity[0]*1.5
 						if self.dash.velocity[1] < 0:
 							self.dash.reset()
@@ -593,7 +626,11 @@ playerInputs = {
 
 
 
-##### TEST LEVEL #####
+##############################################
+#                                            #
+#                 TEST LEVEL                 #
+#                                            #
+##############################################
 mapGeo_loaded = [
 	mglc([(-200, -100), (200, -100)]),
 	mglc([(100, -100), (100, 0)]),
@@ -610,6 +647,10 @@ mapGeo_loaded = [
 
 checkpointList = [
 	cpc([(1100, 500), (1250, 250)], [1175, 350])
+]
+
+mapDecList = [
+	mdlc([(1300, 300), (1300, 200)]),
 ]
 
 
@@ -680,6 +721,9 @@ while True:
 
 
 	for line in mapGeo_loaded:
+		line.draw(opscrn=screen)
+	
+	for line in mapDecList:
 		line.draw(opscrn=screen)
 
 
