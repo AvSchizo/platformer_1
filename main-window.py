@@ -152,12 +152,6 @@ class cameraClass():
 		self.pos[0] = object.pos[0]
 		self.pos[1] = object.pos[1]
 
-if levelEdit:
-	camStartPos = [400, 0, 30]
-else:
-	camStartPos = [0, 0, 0]
-camera = cameraClass(size=[screen.get_width()-50, screen.get_height()-50], pos=camStartPos)
-
 
 
 
@@ -654,8 +648,24 @@ checkpointList = [
 ]
 
 mapDecList = [
-	mdlc([(1300, 300), (1300, 200)]),
+	mdlc([(350, 310), (375, 310)]),
+	mdlc([(370, 315), (375, 310)]),
+	mdlc([(370, 305), (375, 310)]),
+	mdlc([(800, 250), (1000, 250)]),
+	mdlc([(1000, 250), (950, 300)]),
+	mdlc([(1000, 250), (950, 200)]),
 ]
+
+
+if levelEdit:
+	camStartPos = [600, 320, 20]
+else:
+	camStartPos = [0, 0, 0]
+camera = cameraClass(size=[screen.get_width()-50, screen.get_height()-50], pos=camStartPos)
+
+
+
+
 
 
 
@@ -703,15 +713,17 @@ while True:
 		frameHappenings()
 
 
-	if player.pos[0] < camera.left:
-		camera.pos[0] -= camera.width
-	if player.pos[0] > camera.right:
-		camera.pos[0] += camera.width
-	
-	if player.pos[1] < camera.bottom:
-		camera.pos[1] -= camera.height
-	if player.pos[1] > camera.top:
-		camera.pos[1] += camera.height
+	if not levelEdit:
+			
+		if player.pos[0] < camera.left:
+			camera.pos[0] -= camera.width
+		if player.pos[0] > camera.right:
+			camera.pos[0] += camera.width
+		
+		if player.pos[1] < camera.bottom:
+			camera.pos[1] -= camera.height
+		if player.pos[1] > camera.top:
+			camera.pos[1] += camera.height
 
 	if TASedit > 0:
 		cameraFollowPlayer = True
