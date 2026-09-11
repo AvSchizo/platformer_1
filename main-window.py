@@ -17,11 +17,25 @@ resolutionScaling_alt = screen.get_width()/refScreenSize[0]
 clock = pygame.time.Clock()
 
 
+# draws line according to scale
+def drawLine(color, pointA, pointB, scaling, lineWidth=1, inscrn=None, incam=None):
+	if inscrn == None:
+		scrn = screen
+	else:
+		scrn = inscrn
+	
+	if incam == None:
+		cam = camera
+	else:
+		cam = incam
+	
+	pygame.draw.line(scrn, color, (scrn.get_width()/2+(pointA[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointA[1]-cam.pos[1])*scaling), (scrn.get_width()/2+(pointB[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointB[1]-cam.pos[1])*scaling), lineWidth)
+
 
 
 TAS = False
 TASedit = 0
-levelEdit = True
+levelEdit = False
 
 
 def getTASInputs(file):
@@ -92,7 +106,7 @@ def frameHappenings():
 	player.dealWithInputs()
 	player.updatePhysics()
 	player.checkpointCollision(checkpointList)
-	player.checkDeathPlanes()
+	player.checkDeathPlanes(mapHazardList)
 
 
 
@@ -110,183 +124,6 @@ def debug_print(seperated=True):
 	print(f"Xvel: {player.velocity[0]}")
 	print(f"Yvel: {player.velocity[1]}")
 
-
-
-
-
-
-class cameraClass():
-
-	def __init__(self, size=[800, 450], scalingReference=[1/2, 10], pos=[0, 0, 0]):
-
-		self.size = size
-
-		self.pos = pos
-		
-		self.scalingFactor = scalingReference[0]**(1/scalingReference[1])
-
-		self.update()
-	
-
-
-	def getScaling(self, distance=0):
-		# gets called by other objects when they're determining their size and position when drawing themselves
-		return self.scalingFactor**(self.pos[2]-distance)
-	
-
-
-	def update(self):
-		camScaling = self.getScaling()
-
-		self.left = self.pos[0] - (self.size[0]/2 * (1/camScaling))
-		self.right = self.pos[0] + (self.size[0]/2 * (1/camScaling))
-
-		self.bottom = self.pos[1] - (self.size[1]/2 * (1/camScaling))
-		self.top = self.pos[1] + (self.size[1]/2 * (1/camScaling))
-
-		self.width = self.size[0]*(1/camScaling)
-		self.height = self.size[1]*(1/camScaling)
-	
-
-
-	def follow(self, object):
-		self.pos[0] = object.pos[0]
-		self.pos[1] = object.pos[1]
-
-
-
-
-# mglc: mapGeoLineClass
-class mglc():
-
-	def __init__(self, points, direction=None, color=(255, 255, 255)):
-
-		self.points = points
-
-		self.direction = direction
-
-		self.color = color
-	
-
-
-	def draw(self, opscrn=None, opcam=None):
-
-		if opscrn == None:
-			opscrn = screen
-		else:
-			scrn = opscrn
-
-		if opcam == None:
-			cam = camera
-		else:
-			cam = opcam
-
-
-		pointA = self.points[0]
-		pointB = self.points[1]
-
-		scaling = cam.getScaling()*resolutionScaling
-		pygame.draw.line(scrn, self.color, (scrn.get_width()/2+(pointA[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointA[1]-cam.pos[1])*scaling), (scrn.get_width()/2+(pointB[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointB[1]-cam.pos[1])*scaling), 1)
-
-
-
-# dac: directionArrowClass
-class dac():
-
-	def __init__(self, inpoints, scale=.2, useSpecSides=[False, False], specSides=[(0, 0), (0, 0)], color=(0, 255, 0)):
-
-		## finding direction
-		self.points = inpoints
-
-		# setup
-		A = inpoints[0]
-		B = inpoints[1]
-
-		w = B[0]-A[0]
-		h = B[1]-A[1]
-		if w == 0 and h == 0:
-			w = 1
-			h = 0
-		
-		v = sqrt(h**2 + w**2) * scale
-
-		# direction
-		if w == 0:
-			d = (h/abs(h)) * (pi/2)
-		elif h == 0:
-			d = (pi/2) - (w/abs(w))*(pi/2)
-		else:
-			atw = atan(abs(h)/abs(w))
-			
-			if h > 0:
-				if w > 0:
-					d = atw
-				else:
-					d = atw + (pi/2)
-			
-			else:
-				if w < 0:
-					d = atw + pi
-				else:
-					d = atw + (3*pi/2)
-		
-		# other points
-		for i in range(2):
-			# subtracted angle on second 
-			e = i*-2 + 1
-
-			toAppend = [
-				B[0] + cos(d + e*(3*pi/4))*v,
-				B[1] + sin(d + e*(3*pi/4))*v
-			]
-
-			self.points.append(toAppend)
-
-		# specific sides
-		for i in range(2):
-			if useSpecSides[i]:
-				self.points[i] = specSides[i]
-
-
-		# other shit
-		self.color = color
-	
-
-
-	def draw(self, opscrn=None, opcam=None):
-
-		if opscrn == None:
-			opscrn = screen
-		else:
-			scrn = opscrn
-
-		if opcam == None:
-			cam = camera
-		else:
-			cam = opcam
-
-		scaling = cam.getScaling()*resolutionScaling
-
-		pointA = self.points[0]
-		pointB = self.points[1]
-		pointC = self.points[2]
-		pointD = self.points[3]
-		
-		pygame.draw.line(scrn, self.color, (scrn.get_width()/2+(pointA[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointA[1]-cam.pos[1])*scaling), (scrn.get_width()/2+(pointB[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointB[1]-cam.pos[1])*scaling), 1)
-		pygame.draw.line(scrn, self.color, (scrn.get_width()/2+(pointC[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointC[1]-cam.pos[1])*scaling), (scrn.get_width()/2+(pointB[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointB[1]-cam.pos[1])*scaling), 1)
-		pygame.draw.line(scrn, self.color, (scrn.get_width()/2+(pointD[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointD[1]-cam.pos[1])*scaling), (scrn.get_width()/2+(pointB[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pointB[1]-cam.pos[1])*scaling), 1)
-
-
-
-
-### CHECKPOINTS ###
-# checkpointClass
-class cpc():
-
-	def __init__(self, area, point):
-		self.respawn = point
-		# area goes: [topleft, bottomright]
-		self.area = area
 
 
 
@@ -378,10 +215,12 @@ class dashClass():
 
 class playerClass():
 
-	def __init__(self, eep=[0, 0], inList=[], tason=False):
+	def __init__(self, eep=[0, 0], inList=[], tason=False, color="yellow"):
 
 		self.z = 0
 		self.size = [25, 25]
+
+		self.color = color
 
 
 		if tason:
@@ -610,9 +449,29 @@ class playerClass():
 
 
 
-	def checkDeathPlanes(self):
-		# this is for test, replace with list of stage hazards
-		if self.pos[1] <= -200:
+	def checkDeathPlanes(self, hazards):
+		dead = 0
+
+
+		for i in range(len(hazards)):
+
+			c = hazards[i]
+
+			left = self.pos[0]-self.size[0]/2
+			right = self.pos[0]+self.size[0]/2
+			bottom = self.pos[1]-self.size[1]/2
+			top = self.pos[1]+self.size[1]/2
+
+			cleft = c.area[0][0]
+			cright = c.area[1][0]
+			cbottom = c.area[1][1]
+			ctop = c.area[0][1]
+
+			if (left < cright and right > cleft) and (bottom < ctop and top > cbottom):
+				dead = 1
+		
+
+		if dead > 0:
 			self.respawn()
 
 
@@ -640,7 +499,7 @@ class playerClass():
 		scaling = cam.getScaling(self.z) * resolutionScaling
 
 		image = pygame.Surface([25*scaling]*2)
-		image.fill("red")
+		image.fill(self.color)
 
 		# calculates position on screen
 		rect = image.get_rect(center=(scrn.get_width()/2+(self.pos[0]-cam.pos[0])*scaling, scrn.get_height()/2-(self.pos[1]-cam.pos[1])*scaling))
@@ -648,6 +507,290 @@ class playerClass():
 		scrn.blit(image, rect)
 
 player = playerClass(eep=[0, 0], inList=tasInputs, tason=TAS)
+
+
+
+
+class cameraClass():
+
+	def __init__(self, size=[800, 450], scalingReference=[1/2, 10], pos=[0, 0, 0]):
+
+		self.size = size
+
+		self.pos = pos
+		
+		self.scalingFactor = scalingReference[0]**(1/scalingReference[1])
+
+		self.update()
+	
+
+
+	def getScaling(self, distance=0):
+		# gets called by other objects when they're determining their size and position when drawing themselves
+		return self.scalingFactor**(self.pos[2]-distance)
+	
+
+
+	def update(self):
+		camScaling = self.getScaling()
+
+		self.left = self.pos[0] - (self.size[0]/2 * (1/camScaling))
+		self.right = self.pos[0] + (self.size[0]/2 * (1/camScaling))
+
+		self.bottom = self.pos[1] - (self.size[1]/2 * (1/camScaling))
+		self.top = self.pos[1] + (self.size[1]/2 * (1/camScaling))
+
+		self.width = self.size[0]*(1/camScaling)
+		self.height = self.size[1]*(1/camScaling)
+	
+
+
+	def follow(self, object):
+		self.pos[0] = object.pos[0]
+		self.pos[1] = object.pos[1]
+
+
+
+
+# mglc: mapGeoLineClass
+class mglc():
+
+	def __init__(self, points, direction=None, color=(255, 255, 255)):
+
+		self.points = points
+
+		self.direction = direction
+
+		self.color = color
+	
+
+
+	def draw(self, opscrn=None, opcam=None):
+
+		if opscrn == None:
+			scrn = screen
+		else:
+			scrn = opscrn
+
+		if opcam == None:
+			cam = camera
+		else:
+			cam = opcam
+
+
+		pointA = self.points[0]
+		pointB = self.points[1]
+
+		scaling = cam.getScaling()*resolutionScaling
+		drawLine(self.color, pointA, pointB, scaling, inscrn=scrn, incam=cam)
+
+
+
+
+### CHECKPOINTS ###
+# checkpointClass
+class cpc():
+
+	def __init__(self, area, point):
+		self.respawn = point
+		# area goes: [topleft, bottomright]
+		self.area = area
+
+
+
+
+# dac: directionArrowClass
+class dac():
+
+	def __init__(self, inpoints, scale=.2, useSpecSides=[False, False], specSides=[(0, 0), (0, 0)], color=(0, 255, 0)):
+
+		## finding direction
+		self.points = inpoints
+
+		# setup
+		A = inpoints[0]
+		B = inpoints[1]
+
+		w = B[0]-A[0]
+		h = B[1]-A[1]
+		if w == 0 and h == 0:
+			w = 1
+			h = 0
+		
+		v = sqrt(h**2 + w**2) * scale
+
+		# direction
+		if w == 0:
+			d = (h/abs(h)) * (pi/2)
+		elif h == 0:
+			d = (pi/2) - (w/abs(w))*(pi/2)
+		else:
+			d = atan(h/w)
+			
+			if w < 0:
+				d += pi
+		
+		# other points
+		for i in range(2):
+			# subtracted angle on second 
+			e = i*-2 + 1
+
+			toAppend = [
+				B[0] + cos(d + e*(3*pi/4))*v,
+				B[1] + sin(d + e*(3*pi/4))*v
+			]
+
+			self.points.append(toAppend)
+
+		# specific sides
+		for i in range(2):
+			if useSpecSides[i]:
+				self.points[i] = specSides[i]
+
+
+		# other shit
+		self.color = color
+	
+
+
+	def draw(self, opscrn=None, opcam=None):
+
+		if opscrn == None:
+			scrn = screen
+		else:
+			scrn = opscrn
+
+		if opcam == None:
+			cam = camera
+		else:
+			cam = opcam
+
+		scaling = cam.getScaling()*resolutionScaling
+
+		pointA = self.points[0]
+		pointB = self.points[1]
+		pointC = self.points[2]
+		pointD = self.points[3]
+
+		drawLine(self.color, pointA, pointB, scaling, inscrn=scrn, incam=cam)
+		drawLine(self.color, pointC, pointB, scaling, inscrn=scrn, incam=cam)
+		drawLine(self.color, pointD, pointB, scaling, inscrn=scrn, incam=cam)
+
+
+
+
+# mhc: mapHazardClass
+class mhc():
+
+	def __init__(self, inarea, inmode=1, incolor="red"):
+		
+		self.color = incolor
+
+		self.area = inarea
+
+		self.mode = inmode
+	
+
+
+	def draw(self, opscrn=None, opcam=None, mode=1):
+
+		if opscrn == None:
+			scrn = screen
+		else:
+			scrn = opscrn
+
+		if opcam == None:
+			cam = camera
+		else:
+			cam = opcam
+
+		scaling = cam.getScaling()*resolutionScaling
+
+		r = self.area[0]
+		t = self.area[1]
+
+		w = t[0]-r[0]
+		h = r[1]-t[1]
+
+		pos = [
+			r[0]+w/2,
+			r[1]+h/2
+		]
+
+
+		# option 1
+		if mode == 1:
+			drawLine(self.color, r, (t[0], r[1]), scaling, inscrn=scrn, incam=cam)
+			drawLine(self.color, (t[0], r[1]), t, scaling, inscrn=scrn, incam=cam)
+			drawLine(self.color, t, (r[0], t[1]), scaling, inscrn=scrn, incam=cam)
+			drawLine(self.color, (r[0], t[1]), r, scaling, inscrn=scrn, incam=cam)
+
+		# option 2
+		if mode == 2:
+			surf = pygame.Surface([ (w)*scaling, (h)*scaling ])
+			surf.fill(self.color)
+
+			rect = surf.get_rect(center=(scrn.get_width()/2+(pos[0]-cam.pos[0])*scaling, scrn.get_height()/2-(pos[1]-cam.pos[1])*scaling))
+
+			scrn.blit(surf, rect)
+
+
+
+
+
+
+##############################################
+#                                            #
+#                TEST LEVEL                  #
+#                                            #
+##############################################
+
+mapGeo_loaded = [
+	mglc([(-200, -100), (200, -100)]),
+	mglc([(100, -100), (100, 0)]),
+	mglc([(100, 0), (200, 0)]),
+	mglc([(200, -100), (200, 0)]),
+	mglc([(150, 100), (150, 30)]),
+	mglc([(-200, 225), (-100, 225)]),
+	mglc([(0, 350), (150, 350)]),
+	mglc([(250, 325), (250, 475)]),
+	mglc([(300, 275), (500, 275)]),
+	mglc([(600, 400), (650, 400)]),
+	mglc([(1100, 250), (1250, 250)], color=(50, 50, 255)),
+]
+
+checkpointList = [
+	cpc([(1100, 500), (1250, 250)], [1150, 350])
+]
+
+mapDecList = [
+	dac([(-100, 100), (-125, 200)]),
+	dac([(350, 310), (375, 310)]),
+	dac([(800, 300), (1000, 275)]),
+]
+
+mapHazardList = [
+	mhc([(-1000000, -600), (1000000, -1000000)]),
+	mhc([(500, 205), (1100, 190)]),
+]
+
+
+if levelEdit:
+	camStartPos = [700, 320, 30]
+else:
+	camStartPos = [0, 0, 0]
+camera = cameraClass(size=[screen.get_width()-50, screen.get_height()-50], pos=camStartPos)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -676,49 +819,6 @@ playerInputs = {
 	"c": pygame.K_c,
 	"escape": pygame.K_ESCAPE,
 }
-
-
-
-
-
-##############################################
-#                                            #
-#                 TEST LEVEL                 #
-#                                            #
-##############################################
-mapGeo_loaded = [
-	mglc([(-200, -100), (200, -100)]),
-	mglc([(100, -100), (100, 0)]),
-	mglc([(100, 0), (200, 0)]),
-	mglc([(200, -100), (200, 0)]),
-	mglc([(150, 100), (150, 30)]),
-	mglc([(-200, 225), (-100, 225)]),
-	mglc([(0, 350), (150, 350)]),
-	mglc([(250, 325), (250, 475)]),
-	mglc([(300, 275), (500, 275)]),
-	mglc([(600, 400), (650, 400)]),
-	mglc([(1100, 250), (1250, 250)], color=(50, 50, 255)),
-]
-
-checkpointList = [
-	cpc([(1100, 500), (1250, 250)], [1175, 350])
-]
-
-mapDecList = [
-	dac([(350, 310), (375, 310)]),
-	dac([(800, 250), (1000, 250)]),
-]
-
-
-if levelEdit:
-	camStartPos = [600, 320, 20]
-else:
-	camStartPos = [0, 0, 0]
-camera = cameraClass(size=[screen.get_width()-50, screen.get_height()-50], pos=camStartPos)
-
-
-
-
 
 
 
@@ -766,6 +866,8 @@ while True:
 		frameHappenings()
 
 
+
+	### CAMERA ###
 	if not levelEdit:
 			
 		if player.pos[0] < camera.left:
@@ -788,6 +890,14 @@ while True:
 	camera.update()
 
 
+
+
+
+
+	##### RENDERING #####
+
+
+
 	screen.fill((0, 0, 10))
 
 	player.draw()
@@ -798,6 +908,13 @@ while True:
 	
 	for line in mapDecList:
 		line.draw(opscrn=screen)
+	
+	for haz in mapHazardList:
+		haz.draw(opscrn=screen, mode=haz.mode)
+
+
+
+
 
 
 	pygame.display.update()
