@@ -397,7 +397,7 @@ class playerClass():
 							self.velocity[0] += self.dash.velocity[0]*1.5
 						if self.dash.velocity[1] < 0:
 							self.dash.reset()
-							self.dash.startCooldown(10)
+							self.dash.startCooldown()
 						else:
 							self.dash.reset()
 
@@ -534,14 +534,14 @@ class cameraClass():
 	def update(self):
 		camScaling = self.getScaling()
 
-		self.left = self.pos[0] - (self.size[0]/2 * (1/camScaling))
-		self.right = self.pos[0] + (self.size[0]/2 * (1/camScaling))
+		self.left = self.pos[0] - (self.size[0]/2)
+		self.right = self.pos[0] + (self.size[0]/2)
 
-		self.bottom = self.pos[1] - (self.size[1]/2 * (1/camScaling))
-		self.top = self.pos[1] + (self.size[1]/2 * (1/camScaling))
+		self.bottom = self.pos[1] - (self.size[1]/2)
+		self.top = self.pos[1] + (self.size[1]/2)
 
-		self.width = self.size[0]*(1/camScaling)
-		self.height = self.size[1]*(1/camScaling)
+		self.width = self.size[0]
+		self.height = self.size[1]
 	
 
 
@@ -779,7 +779,7 @@ if levelEdit:
 	camStartPos = [700, 320, 30]
 else:
 	camStartPos = [0, 0, 0]
-camera = cameraClass(size=[screen.get_width()-50, screen.get_height()-50], pos=camStartPos)
+camera = cameraClass(size=[refScreenSize[0]-50, refScreenSize[1]-50], pos=camStartPos)
 
 
 
